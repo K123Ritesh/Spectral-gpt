@@ -17,7 +17,6 @@ import {
   FAB,
 } from 'react-native-paper';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useFocusEffect } from '@react-navigation/native';
 
 interface AnalysisResult {
   id: string;
@@ -38,11 +37,9 @@ export default function HistoryScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState<string>('all');
 
-  useFocusEffect(
-    useCallback(() => {
-      loadScans();
-    }, [])
-  );
+  useEffect(() => {
+    loadScans();
+  }, []);
 
   useEffect(() => {
     filterScans();

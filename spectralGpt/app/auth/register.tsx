@@ -17,7 +17,6 @@ import {
 } from 'react-native-paper';
 import { router } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
-import ApiService from '@/services/api';
 
 export default function RegisterScreen() {
   const [name, setName] = useState('');
@@ -47,12 +46,18 @@ export default function RegisterScreen() {
 
     setLoading(true);
     try {
-      const response = await ApiService.register(name, email, password);
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
 
-      if (response.data.token) {
-        await login(response.data.token, response.data.user);
-        Alert.alert('Success', 'Account created successfully!');
-      }
+      const dummyUser = {
+        id: Date.now().toString(),
+        name,
+        email,
+        createdAt: new Date().toISOString(),
+      };
+
+      await login('dummy-token', dummyUser);
+      Alert.alert('Success', 'Account created successfully!');
     } catch (error: any) {
       console.error('Registration error:', error);
       Alert.alert(

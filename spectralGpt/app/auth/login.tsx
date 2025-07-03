@@ -17,7 +17,6 @@ import {
 } from 'react-native-paper';
 import { router } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
-import ApiService from '@/services/api';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -34,10 +33,19 @@ export default function LoginScreen() {
 
     setLoading(true);
     try {
-      const response = await ApiService.login(email, password);
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
 
-      if (response.data.token) {
-        await login(response.data.token, response.data.user);
+      if (email === 'test@example.com' && password === 'password') {
+        const dummyUser = {
+          id: '1',
+          name: 'Test User',
+          email: 'test@example.com',
+          createdAt: new Date().toISOString(),
+        };
+        await login('dummy-token', dummyUser);
+      } else {
+        throw new Error('Invalid credentials');
       }
     } catch (error: any) {
       console.error('Login error:', error);

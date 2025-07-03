@@ -22,9 +22,6 @@ import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
 import { Camera } from 'expo-camera';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import axios from 'axios';
-
-const API_BASE_URL = 'http://localhost:3000/api';
 const { width } = Dimensions.get('window');
 
 interface AnalysisResult {
