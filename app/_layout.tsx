@@ -1,4 +1,3 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@/node_modules/@react-navigation/native/lib/typescript/src';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -45,10 +44,8 @@ export default function RootLayout() {
  
     <AuthProvider>
       <PaperProvider>
-        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-          <AppNavigator />
+        <AppNavigator />
           <StatusBar style="auto" />
-        </ThemeProvider>
       </PaperProvider>
     </AuthProvider>
  
