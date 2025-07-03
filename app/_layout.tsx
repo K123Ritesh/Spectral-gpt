@@ -16,9 +16,13 @@ function AppNavigator() {
   }
 
   return (
-     <Stack screenOptions={{ headerShown: false }}>
+    <Stack screenOptions={{ headerShown: false }}>
       {isAuthenticated ? (
-        <Stack.Screen name="(tabs)" />
+        <>
+          <Stack.Screen name="index" />
+          <Stack.Screen name="history" />
+          <Stack.Screen name="profile" />
+        </>
       ) : (
         <>
           <Stack.Screen name="auth/login" />
@@ -27,7 +31,7 @@ function AppNavigator() {
       )}
       <Stack.Screen name="+not-found" />
     </Stack>
-   );
+  );
 }
 
 export default function RootLayout() {

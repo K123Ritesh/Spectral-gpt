@@ -5,18 +5,20 @@ import {
   FlatList,
   RefreshControl,
   Alert,
+  TouchableOpacity,
+  ScrollView,
 } from 'react-native';
 import {
-  Card,
   Title,
-  Paragraph,
   Text,
-  Button,
   Searchbar,
   Chip,
   FAB,
+  Card,
+  IconButton,
 } from 'react-native-paper';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useFocusEffect } from '@react-navigation/native';
 
 interface AnalysisResult {
   id: string;
@@ -37,9 +39,11 @@ export default function HistoryScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState<string>('all');
 
-  useEffect(() => {
-    loadScans();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      loadScans();
+    }, [])
+  );
 
   useEffect(() => {
     filterScans();
@@ -50,7 +54,7 @@ export default function HistoryScreen() {
       const storedScans = await AsyncStorage.getItem('recentScans');
       if (storedScans) {
         const parsedScans = JSON.parse(storedScans);
-        setScans(parsedScans);
+        setScans(parsedScans.sort((a: AnalysisResult, b: AnalysisResult) => new Date(b.analysisDate).getTime() - new Date(a.analysisDate).getTime()));
       }
     } catch (error) {
       console.error('Error loading scans:', error);
@@ -60,7 +64,6 @@ export default function HistoryScreen() {
   const filterScans = () => {
     let filtered = scans;
 
-    // Apply search filter
     if (searchQuery) {
       filtered = filtered.filter(scan =>
         scan.fileName.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -69,7 +72,6 @@ export default function HistoryScreen() {
       );
     }
 
-    // Apply category filter
     if (selectedFilter !== 'all') {
       switch (selectedFilter) {
         case 'excellent':
@@ -102,7 +104,7 @@ export default function HistoryScreen() {
   const clearHistory = () => {
     Alert.alert(
       'Clear History',
-      'Are you sure you want to clear all scan history? This action cannot be undone.',
+      'Are you sure you want to clear all scan history?',
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -112,7 +114,6 @@ export default function HistoryScreen() {
             try {
               await AsyncStorage.removeItem('recentScans');
               setScans([]);
-              setFilteredScans([]);
             } catch (error) {
               console.error('Error clearing history:', error);
             }
@@ -123,62 +124,50 @@ export default function HistoryScreen() {
   };
 
   const getScoreColor = (score: number) => {
-    if (score >= 80) return '#4CAF50';
-    if (score >= 60) return '#FF9800';
-    return '#F44336';
+    if (score >= 80) return '#000000';
+    if (score >= 60) return '#000000';
+    return '#000000';
   };
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return date.toLocaleDateString(undefined, {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
   };
 
   const renderScanItem = ({ item }: { item: AnalysisResult }) => (
     <Card style={styles.scanCard}>
-      <Card.Content>
-        <View style={styles.scanHeader}>
-          <Text style={styles.fileName}>{item.fileName}</Text>
-          <Text style={[styles.score, { color: getScoreColor(item.qualityScore) }]}>
-            {item.qualityScore}/100
-          </Text>
-        </View>
-        
-        <Text style={styles.date}>{formatDate(item.analysisDate)}</Text>
-        
-        <View style={styles.detailsRow}>
-          <View style={styles.detailItem}>
-            <Text style={styles.detailLabel}>Freshness</Text>
-            <Text style={styles.detailValue}>{item.freshness}</Text>
+      <TouchableOpacity onPress={() => { /* Navigate to detail view? */ }}>
+        <Card.Content>
+          <View style={styles.scanHeader}>
+            <Text style={styles.fileName}>{item.fileName}</Text>
+            <Text style={[styles.score, { color: getScoreColor(item.qualityScore) }]}>
+              {item.qualityScore}
+            </Text>
           </View>
-          <View style={styles.detailItem}>
-            <Text style={styles.detailLabel}>Nutrition</Text>
-            <Text style={styles.detailValue}>{item.nutritionalValue}</Text>
+          <Text style={styles.date}>{formatDate(item.analysisDate)}</Text>
+          <View style={styles.detailsRow}>
+            <Chip icon="food-apple-outline" style={styles.chip}>{item.freshness}</Chip>
+            <Chip icon="chart-bar" style={styles.chip}>{item.nutritionalValue}</Chip>
           </View>
-        </View>
-
-        {item.warnings.length > 0 && (
-          <View style={styles.warningsContainer}>
-            <Text style={styles.warningText}>⚠️ {item.warnings.join(', ')}</Text>
-          </View>
-        )}
-
-        <View style={styles.recommendationsContainer}>
-          <Text style={styles.recommendationsTitle}>Recommendations:</Text>
-          {item.recommendations.slice(0, 2).map((rec, index) => (
-            <Text key={index} style={styles.recommendationItem}>• {rec}</Text>
-          ))}
-        </View>
-      </Card.Content>
+          {item.warnings.length > 0 && (
+            <Text style={styles.warningText}>⚠️ Contains warnings</Text>
+          )}
+        </Card.Content>
+      </TouchableOpacity>
     </Card>
   );
 
   const filterOptions = [
     { key: 'all', label: 'All' },
-    { key: 'excellent', label: 'Excellent (90+)' },
-    { key: 'good', label: 'Good (70-89)' },
-    { key: 'fair', label: 'Fair (50-69)' },
-    { key: 'poor', label: 'Poor (<50)' },
-    { key: 'warnings', label: 'With Warnings' },
+    { key: 'excellent', label: 'Excellent' },
+    { key: 'good', label: 'Good' },
+    { key: 'fair', label: 'Fair' },
+    { key: 'poor', label: 'Poor' },
+    { key: 'warnings', label: 'Warnings' },
   ];
 
   return (
@@ -186,37 +175,29 @@ export default function HistoryScreen() {
       <View style={styles.header}>
         <Title style={styles.title}>Scan History</Title>
         <Searchbar
-          placeholder="Search scans..."
+          placeholder="Search by name, freshness..."
           onChangeText={setSearchQuery}
           value={searchQuery}
           style={styles.searchbar}
         />
-        
-        <View style={styles.filtersContainer}>
-          <FlatList
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            data={filterOptions}
-            keyExtractor={(item) => item.key}
-            renderItem={({ item }) => (
-              <Chip
-                selected={selectedFilter === item.key}
-                onPress={() => setSelectedFilter(item.key)}
-                style={styles.filterChip}
-              >
-                {item.label}
-              </Chip>
-            )}
-          />
-        </View>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filtersContainer}>
+          {filterOptions.map(option => (
+            <Chip
+              key={option.key}
+              selected={selectedFilter === option.key}
+              onPress={() => setSelectedFilter(option.key)}
+              style={[styles.filterChip, selectedFilter === option.key && styles.selectedFilterChip]}
+            >
+              {option.label}
+            </Chip>
+          ))}
+        </ScrollView>
       </View>
 
       {filteredScans.length === 0 ? (
         <View style={styles.emptyContainer}>
           <Text style={styles.emptyText}>
-            {scans.length === 0 
-              ? 'No scans yet. Start by scanning your first food item!' 
-              : 'No scans match your search criteria.'}
+            {scans.length === 0 ? 'No scans yet.' : 'No scans match your criteria.'}
           </Text>
         </View>
       ) : (
@@ -226,117 +207,100 @@ export default function HistoryScreen() {
           renderItem={renderScanItem}
           contentContainerStyle={styles.listContainer}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#4CAF50']} />
           }
         />
       )}
 
       {scans.length > 0 && (
         <FAB
-          icon="delete"
+          icon="delete-sweep"
           style={styles.fab}
           onPress={clearHistory}
-          label="Clear History"
+          label="Clear"
         />
       )}
     </View>
   );
 }
 
+import { Colors } from '../constants/Colors';
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: Colors.background,
   },
   header: {
     padding: 16,
-    backgroundColor: 'white',
-    elevation: 2,
+    paddingTop: 40,
+    backgroundColor: Colors.headerBackground,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.tertiary,
   },
   title: {
-    fontSize: 24,
+    fontSize: 32,
     fontWeight: 'bold',
-    color: '#2E7D32',
-    marginBottom: 16,
+    color: Colors.text,
   },
   searchbar: {
-    marginBottom: 16,
+    marginTop: 16,
+    borderRadius: 30,
+    elevation: 0,
+    backgroundColor: Colors.tertiary,
   },
   filtersContainer: {
-    marginBottom: 8,
+    marginTop: 16,
   },
   filterChip: {
     marginRight: 8,
+    backgroundColor: Colors.tertiary,
+  },
+  selectedFilterChip: {
+    backgroundColor: Colors.primary,
   },
   listContainer: {
     padding: 16,
   },
   scanCard: {
-    marginBottom: 12,
+    marginBottom: 16,
+    borderRadius: 12,
     elevation: 2,
+    backgroundColor: Colors.cardBackground,
   },
   scanHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
+    alignItems: 'flex-start',
   },
   fileName: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
-    color: '#333',
+    color: Colors.text,
     flex: 1,
   },
   score: {
-    fontSize: 18,
+    fontSize: 22,
     fontWeight: 'bold',
+    color: Colors.text,
   },
   date: {
     fontSize: 12,
-    color: '#666',
-    marginBottom: 12,
+    color: Colors.text,
+    marginTop: 4,
   },
   detailsRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 12,
+    marginTop: 12,
   },
-  detailItem: {
-    flex: 1,
-  },
-  detailLabel: {
-    fontSize: 12,
-    color: '#666',
-    marginBottom: 4,
-  },
-  detailValue: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  warningsContainer: {
-    backgroundColor: '#FFF3E0',
-    padding: 8,
-    borderRadius: 4,
-    marginBottom: 12,
+  chip: {
+    marginRight: 8,
+    backgroundColor: Colors.tertiary,
   },
   warningText: {
     fontSize: 12,
-    color: '#F57C00',
-  },
-  recommendationsContainer: {
+    color: Colors.error,
     marginTop: 8,
-  },
-  recommendationsTitle: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: '#666',
-    marginBottom: 4,
-  },
-  recommendationItem: {
-    fontSize: 12,
-    color: '#666',
-    marginVertical: 1,
   },
   emptyContainer: {
     flex: 1,
@@ -345,8 +309,8 @@ const styles = StyleSheet.create({
     padding: 32,
   },
   emptyText: {
-    fontSize: 16,
-    color: '#666',
+    fontSize: 18,
+    color: Colors.text,
     textAlign: 'center',
   },
   fab: {
@@ -354,5 +318,6 @@ const styles = StyleSheet.create({
     margin: 16,
     right: 0,
     bottom: 0,
+    backgroundColor: Colors.errorDark,
   },
 });
