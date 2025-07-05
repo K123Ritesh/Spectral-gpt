@@ -58,7 +58,7 @@ export default function ScanScreen() {
       {
         id: 'welcome',
         type: 'bot',
-        content: 'Welcome to FoodScan AI! How can I help you analyze your food today?',
+        content: 'Welcome to SpectralGPT! How can I help you analyze your food today?',
       },
     ]);
   }, []);
