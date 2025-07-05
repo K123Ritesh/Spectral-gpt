@@ -11,7 +11,7 @@ const Header = () => {
 
   return (
     <Appbar.Header>
-      <Appbar.Content title="FoodScan AI" />
+      <Appbar.Content title="Spectral GPT" />
       {Platform.OS === 'web' ? (
         <View style={styles.row}>
           <Button onPress={() => router.push('/history')}>History</Button>
